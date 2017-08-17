@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"code.cloudfoundry.org/bytefmt"
 )
 
 // BUFFERSIZE is the smallest buffer size to be transferred over tcp network
@@ -36,8 +39,6 @@ func startServer(addr, path string) {
 				return nil
 			})
 
-			log.Println(fileList)
-
 			for _, file := range fileList {
 				sendFile(conn, file)
 			}
@@ -64,6 +65,10 @@ func sendFile(conn net.Conn, filePath string) {
 	fileName := padString(fileInfo.Name(), 64)
 	fileSize := padString(strconv.FormatInt(fileInfo.Size(), 10), 10)
 
+	fmt.Println("Transferring : ", fileInfo.Name())
+	fmt.Println("Size         : ", bytefmt.ByteSize(uint64(fileInfo.Size())))
+	fmt.Println("-------------------------------------------------------------------------")
+
 	conn.Write([]byte(fileSize))
 	conn.Write([]byte(fileName))
 
@@ -81,6 +86,7 @@ func sendFile(conn net.Conn, filePath string) {
 
 		conn.Write(sendBuffer)
 	}
+
 	return
 
 }

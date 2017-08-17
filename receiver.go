@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
+	"time"
+
+	"code.cloudfoundry.org/bytefmt"
 )
 
 func startClient(addr string) {
@@ -35,11 +39,11 @@ func receiveFile(conn net.Conn) {
 		conn.Read(bufferFileName)
 		fileName := strings.Trim(string(bufferFileName), ":")
 
-		log.Println(fileName)
+		start := time.Now()
 
 		receivedFile, err := os.Create(fileName)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 		}
 
 		var receivedBytes int64
@@ -58,5 +62,12 @@ func receiveFile(conn net.Conn) {
 		}
 
 		receivedFile.Close()
+
+		elapsed := time.Since(start)
+		fmt.Println("Transferred : ", fileName)
+		fmt.Println("Size        : ", bytefmt.ByteSize(uint64(fileSize)))
+		fmt.Println("Time taken  : ", elapsed)
+		fmt.Println("-------------------------------------------------------------------------")
+
 	}
 }
