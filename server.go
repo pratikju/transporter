@@ -1,37 +1,54 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
-// BUFFERSIZE is size of buffer to transferred at once.
+// BUFFERSIZE is the smallest buffer size to be transferred over tcp network
 const BUFFERSIZE = 1024
 
-var (
-	mode = flag.String("mode", "", "Choose the mode of application")
-	path = flag.String("path", "", "Absolute path of the file/directory to be transferred")
-	port = flag.Int("p", 7080, "Port to connect to")
-)
-
-func padString(source string, toLength int) string {
-	currLength := len(source)
-	remLength := toLength - currLength
-
-	for i := 0; i < remLength; i++ {
-		source += ":"
+func startServer(addr, path string) {
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalln(err)
 	}
-	return source
+	defer listener.Close()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		if *recursive == true {
+
+			fileList := []string{}
+			_ = filepath.Walk(path, func(fpath string, f os.FileInfo, err error) error {
+				if fpath == path {
+					return nil
+				}
+				fileList = append(fileList, fpath)
+				return nil
+			})
+
+			log.Println(fileList)
+
+			for _, file := range fileList {
+				sendFile(conn, file)
+			}
+			conn.Write(make([]byte, BUFFERSIZE))
+			conn.Close()
+		}
+	}
+
 }
 
 func sendFile(conn net.Conn, filePath string) {
-	defer conn.Close()
-
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Println(err)
@@ -66,34 +83,4 @@ func sendFile(conn net.Conn, filePath string) {
 	}
 	return
 
-}
-
-func startServer(addr, path string) {
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer listener.Close()
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		go sendFile(conn, path)
-	}
-
-}
-
-func main() {
-	flag.Parse()
-
-	addr := fmt.Sprintf("%s:%d", "0.0.0.0", *port)
-
-	if *mode == "server" {
-		startServer(addr, *path)
-	} else {
-		startClient(addr)
-	}
 }
