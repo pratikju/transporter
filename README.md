@@ -35,3 +35,7 @@ transporter -R -mode=sender path="<absolute-path of directory/>"
 ```go
 transporter
 ```
+
+## License
+
+MIT, see [LICENSE](https://github.com/pratikju/transporter/blob/master/LICENSE.md)
