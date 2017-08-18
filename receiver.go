@@ -13,12 +13,12 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 )
 
-func startClient(addr string) {
-	conn, err := net.Dial("tcp", addr)
+func startClient() {
+	senderIP := getSenderIP()
+	conn, err := net.Dial("tcp", senderIP.String()+":"+port)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	receiveFile(conn)
 }
 

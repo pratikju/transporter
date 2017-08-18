@@ -16,6 +16,7 @@ import (
 const BUFFERSIZE = 1024
 
 func startServer(addr, path string) {
+	go sendMulticastPacket()
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalln(err)
@@ -42,9 +43,13 @@ func startServer(addr, path string) {
 			for _, file := range fileList {
 				sendFile(conn, file)
 			}
-			conn.Write(make([]byte, BUFFERSIZE))
-			conn.Close()
+		} else {
+			sendFile(conn, path)
 		}
+
+		conn.Write(make([]byte, BUFFERSIZE))
+		conn.Close()
+
 	}
 
 }
