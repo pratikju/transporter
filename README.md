@@ -11,8 +11,6 @@ Usage of transporter:
   -R	Whether to send files recursively
   -mode string
     	Choose the mode of application(sender/receiver) (default "receiver")
-  -p int
-    	Port to connect to (default 7080)
   -path string
     	Absolute path of the file/directory to be transferred
 ```
