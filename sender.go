@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -22,34 +24,70 @@ func startServer(addr, path string) {
 		log.Fatalln(err)
 	}
 	defer listener.Close()
+
+  generatePassword()
+	fmt.Println("Waiting for the client to authenticate...")
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Fatalln(err)
 		}
-		if *recursive == true {
-
-			fileList := []string{}
-			_ = filepath.Walk(path, func(fpath string, f os.FileInfo, err error) error {
-				if fpath == path {
+		pin := readPin(*file)
+		status := isPasswordOK(pin, path, conn)
+		if status == false {
+			conn.Close()
+			fmt.Println("Connection has been dropped due to the incorrect PIN.")
+		} else {
+			fmt.Println("*********************************************************")
+			fmt.Println("Welcome to the network!. Your Share is our Care!! Enjoy!!")
+			fmt.Println("*********************************************************")
+			conn.Write([]byte(PASS + ":"))
+			if *recursive == true {
+				fileList := []string{}
+				_ = filepath.Walk(path, func(fpath string, f os.FileInfo, err error) error {
+					if fpath == path {
+						return nil
+					}
+					fileList = append(fileList, fpath)
 					return nil
-				}
-				fileList = append(fileList, fpath)
-				return nil
-			})
+				})
 
-			for _, file := range fileList {
-				sendFile(conn, file)
+				for _, file := range fileList {
+					sendFile(conn, file)
+				}
+				conn.Write(make([]byte, BUFFERSIZE))
+				conn.Close()
+			} else {
+				sendFile(conn, path)
+			}
+
+			conn.Write(make([]byte, BUFFERSIZE))
+			conn.Close()
+
+		}
+	}
+}
+
+func isPasswordOK(pin, path string, conn net.Conn) bool {
+	count := 1
+	for ; count <= 3; count++ {
+		buffer := make([]byte, 64)
+		_, err := conn.Read(buffer)
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		buffer = bytes.Trim(buffer, "\x00")
+		if string(buffer[:len(buffer)]) != pin {
+			conn.Write([]byte(FAIL + ":"))
+			if count == 3 {
+				return false
 			}
 		} else {
-			sendFile(conn, path)
+			return true
 		}
-
-		conn.Write(make([]byte, BUFFERSIZE))
-		conn.Close()
-
 	}
-
+	return false
 }
 
 func sendFile(conn net.Conn, filePath string) {
@@ -92,4 +130,12 @@ func sendFile(conn net.Conn, filePath string) {
 
 	return
 
+}
+
+func readPin(file string) string {
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(data)
 }

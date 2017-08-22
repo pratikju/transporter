@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -13,29 +14,59 @@ import (
 	"code.cloudfoundry.org/bytefmt"
 )
 
+const PASS = "PASS"
+const FAIL = "FAIL"
+
 func startClient() {
+	var response string
+	var i int
 	senderIP := getSenderIP()
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", senderIP.String(), port))
 	if err != nil {
 		log.Fatalln(err)
 	}
+	for i = 0; i < 3; i++ {
+		fmt.Println("Enter the PIN: ")
+		_, err = fmt.Scanln(&response)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintf(conn, response)
+		resp, _ := bufio.NewReader(conn).ReadString(':')
+		resp = strings.TrimSuffix(resp, ":")
+		if resp != FAIL {
+			break
+		}
+		if i < 2 {
+			fmt.Printf("Incorrect Attempt(s).%d attempts more...\n\n", 2-i)
+		}
+
+	}
+
+	if i == 3 {
+		fmt.Println("Maximum number of incorrect PIN attempts crossed.")
+		return
+	}
+
 	receiveFile(conn)
 }
 
 func receiveFile(conn net.Conn) {
 	defer conn.Close()
-
 	bufferFileName := make([]byte, 64)
 	bufferFileSize := make([]byte, 10)
 
 	for {
-		conn.Read(bufferFileSize)
-		fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
+		_, err := conn.Read(bufferFileSize)
+		if err == io.EOF {
+			fmt.Println("The connection has been dropped..")
+			conn.Close()
+		}
 
+		fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 		if fileSize == 0 {
 			break
 		}
-
 		conn.Read(bufferFileName)
 		fileName := strings.Trim(string(bufferFileName), ":")
 
@@ -64,6 +95,7 @@ func receiveFile(conn net.Conn) {
 		receivedFile.Close()
 
 		elapsed := time.Since(start)
+		fmt.Println("-----------------------Receiving File(s)---------------------------------")
 		fmt.Println("Transferred : ", fileName)
 		fmt.Println("Size        : ", bytefmt.ByteSize(uint64(fileSize)))
 		fmt.Println("Time taken  : ", elapsed)
