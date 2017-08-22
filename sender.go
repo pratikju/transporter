@@ -24,7 +24,8 @@ func startServer(addr, path string) {
 		log.Fatalln(err)
 	}
 	defer listener.Close()
-	generatePassword()
+
+  generatePassword()
 	fmt.Println("Waiting for the client to authenticate...")
 	for {
 		conn, err := listener.Accept()
