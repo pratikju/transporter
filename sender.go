@@ -22,13 +22,11 @@ func startServer(addr, path string) {
 		log.Fatalln(err)
 	}
 	defer listener.Close()
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Fatalln(err)
 		}
-
 		if *recursive == true {
 
 			fileList := []string{}

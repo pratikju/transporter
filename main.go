@@ -1,6 +1,8 @@
 package main
 
-import "flag"
+import (
+	"flag"
+)
 
 var (
 	mode      = flag.String("mode", "receiver", "Choose the mode of application(sender/receiver)")
@@ -14,7 +16,6 @@ const (
 
 func main() {
 	flag.Parse()
-
 	if *mode == "sender" {
 		startServer("0.0.0.0:"+port, *path)
 	} else {

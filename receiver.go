@@ -15,7 +15,7 @@ import (
 
 func startClient() {
 	senderIP := getSenderIP()
-	conn, err := net.Dial("tcp", senderIP.String()+":"+port)
+	conn, err := net.Dial("tcp", senderIP+":"+port)
 	if err != nil {
 		log.Fatalln(err)
 	}
