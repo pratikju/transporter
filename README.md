@@ -9,22 +9,21 @@ Currently, it only provides command line interface. So, Go ahead and give it a t
 ```
 Usage of transporter:
   -R	Whether to send files recursively
-  -mode string
-    	Choose the mode of application(sender/receiver) (default "receiver")
   -path string
     	Absolute path of the file/directory to be transferred
+  -s	Specify whether application should act as sender
 ```
 
 ### As Sender
 
 ***simple file-transfer***
 ```go
-transporter -mode=sender path="<absolute-path of file/>"
+transporter -s path="<absolute-path of file/>"
 ```
 
 ***recursive file-transfer***
 ```go
-transporter -R -mode=sender path="<absolute-path of directory/>"
+transporter -R -s path="<absolute-path of directory/>"
 ```
 
 
