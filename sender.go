@@ -18,6 +18,7 @@ import (
 const BUFFERSIZE = 1024
 
 func startServer(addr, path string) {
+	go sendMulticastPacket()
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalln(err)
@@ -36,7 +37,9 @@ func startServer(addr, path string) {
 			conn.Close()
 			fmt.Println("Connection has been dropped due to the incorrect PIN.")
 		} else {
+			fmt.Println("*********************************************************")
 			fmt.Println("Welcome to the network!. Your Share is our Care!! Enjoy!!")
+			fmt.Println("*********************************************************")
 			conn.Write([]byte(PASS + ":"))
 			if *recursive == true {
 				fileList := []string{}
@@ -53,7 +56,13 @@ func startServer(addr, path string) {
 				}
 				conn.Write(make([]byte, BUFFERSIZE))
 				conn.Close()
+			} else {
+				sendFile(conn, path)
 			}
+
+			conn.Write(make([]byte, BUFFERSIZE))
+			conn.Close()
+
 		}
 	}
 }

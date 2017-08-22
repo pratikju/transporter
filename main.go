@@ -1,20 +1,26 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+)
 
 var (
-	mode       = flag.String("mode", "receiver", "Choose the mode of application(sender/receiver)")
-	path       = flag.String("path", "", "Absolute path of the file/directory to be transferred")
-	recursive  = flag.Bool("R", false, "Whether to send files recursively")
-	senderAddr = flag.String("s", "", "Sender Host address to connect to")
-	file       = flag.String("pinFileName", "/tmp/password", "name of the file to store network pin.")
+	sender    = flag.Bool("s", false, "Specify whether application should act as sender ")
+	path      = flag.String("path", "", "Absolute path of the file/directory to be transferred")
+	recursive = flag.Bool("R", false, "Whether to send files recursively")
+	file      = flag.String("pinFileName", "/tmp/password", "name of the file to store network pin.")
+)
+
+const (
+	port = 9999
 )
 
 func main() {
 	flag.Parse()
-	if *mode == "sender" {
-		startServer("0.0.0.0:9999", *path)
+	if *sender {
+		startServer(fmt.Sprintf("0.0.0.0:%d", port), *path)
 	} else {
-		startClient(*senderAddr)
+		startClient()
 	}
 }

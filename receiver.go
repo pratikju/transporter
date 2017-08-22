@@ -17,10 +17,11 @@ import (
 const PASS = "PASS"
 const FAIL = "FAIL"
 
-func startClient(addr string) {
+func startClient() {
 	var response string
 	var i int
-	conn, err := net.Dial("tcp", addr)
+	senderIP := getSenderIP()
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", senderIP.String(), port))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -33,16 +34,20 @@ func startClient(addr string) {
 		fmt.Fprintf(conn, response)
 		resp, _ := bufio.NewReader(conn).ReadString(':')
 		resp = strings.TrimSuffix(resp, ":")
-		log.Println("RESPONSE: ", resp)
 		if resp != FAIL {
 			break
 		}
+		if i < 2 {
+			fmt.Printf("Incorrect Attempt(s).%d attempts more...\n\n", 2-i)
+		}
+
 	}
 
 	if i == 3 {
 		fmt.Println("Maximum number of incorrect PIN attempts crossed.")
 		return
 	}
+
 	receiveFile(conn)
 }
 
